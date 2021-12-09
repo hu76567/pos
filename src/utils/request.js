@@ -2,10 +2,12 @@ import axios from 'axios'
 import router from '@/router'
 import JsonBig from 'json-bigint'
 
-// 基地址
-axios.defaults.baseURL = '/api'
+axios.defaults.baseURL =
+  process.env.NODE_ENV === 'development'
+    ? '/api'
+    : process.env.VUE_APP_BASE_URL
 
-// 请求拦截器
+// 请求拦截
 axios.interceptors.request.use(
   function (config) {
     const token = localStorage.getItem('user-token')
@@ -23,7 +25,7 @@ axios.defaults.transformResponse = [
     return res
   }
 ]
-// 响应拦截器
+// 响应拦截
 axios.interceptors.response.use(
   function (response) {
     return response.data ? response.data : {}

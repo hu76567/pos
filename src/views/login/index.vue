@@ -2,7 +2,6 @@
   <div class="login">
     <el-card class="login_card">
       <div class="title"></div>
-
       <el-form
         ref="loginForm"
         :model="loginForm"
@@ -32,7 +31,7 @@
 </template>
 
 <script>
-import { login } from '../../api/api.js'
+import { login } from '../../api/login.js'
 
 export default {
   data () {
@@ -48,15 +47,15 @@ export default {
           { required: true, message: '代码不能为空' },
           {
             // 用正则来校验格式是否正确
-            pattern: /^[a-zA-Z0-9_-]{4,16}$/, // 正则表达式
-            message: '手机号格式错误'
+            pattern: /^[a-zA-Z0-9_-]{1,16}$/, // 正则表达式
+            message: '代码格式错误'
           }
         ],
         password: [
           { required: true, message: '密码不能为空' },
           {
-            pattern: /^[a-zA-Z0-9_-]{4,16}$/,
-            message: '密码格式错误'
+            pattern: /^[a-zA-Z0-9_-]{1,16}$/,
+            message: '口令格式错误'
           }
         ]
       }
@@ -65,10 +64,30 @@ export default {
   methods: {
     login () {
       this.$refs.loginForm.validate().then(async () => {
-        const res = await login(this.loginForm)
-        if (res.msg === '登陆成功' && res.code === 0) {
-          localStorage.setItem('operatoId', this.loginForm.code)
-          this.$router.push('/home')
+        const loading = this.$loading({
+          lock: true,
+          text: '登录中', // 加载时文字
+          spinner: 'el-icon-loading', // 加载样式
+          background: 'rgba(0, 0, 0, 0.7)' // 透明度
+        })
+        try {
+          const res = await login(this.loginForm)
+          loading.close()
+          if (res.msg === '登陆成功' && res.code === 0) {
+            localStorage.setItem('operatoId', this.loginForm.code)
+            this.$router.push('/home')
+          } else {
+            this.$message({
+              type: 'error',
+              message: res.msg
+            })
+          }
+        } catch (error) {
+          loading.close()
+          this.$message({
+            type: 'error',
+            message: '服务器错误 , 请稍后再试'
+          })
         }
       })
     }
