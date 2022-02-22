@@ -97,7 +97,7 @@
       <div class="middlebox">
         <el-button type="primary" @click="readCard = true">读卡</el-button>
         <el-button type="primary" @click="returndialog = true">退单</el-button>
-        <el-button type="primary" @click="refresh">刷新</el-button>
+        <el-button type="primary" @click="reload">刷新</el-button>
       </div>
 
       <!-- 右 -->
@@ -107,7 +107,7 @@
           <input
             ref="vip"
             type="text"
-            v-model="conditionform.vipname"
+            v-model="conditionform.membername"
             @keyup.enter="vipdown"
             style="width: 10vw; margin-left: 0.1vw; font-size: 1.5vw" />
           <input
@@ -202,8 +202,9 @@
             type="text"
             size="small"
             ref="remark"
+            @input="notesChange"
             @keydown.enter="remarkdown"
-            v-model="conditionform.remark"
+            v-model="conditionform.notes"
             style="width: 22.5vw; font-size: 1.5vw"
           />
         </el-row>
@@ -310,7 +311,13 @@
     </el-dialog>
 
     <!-- pos收款 -->
-    <el-dialog title="pos收款" top="5vh" :visible.sync="recpaydialog" modal width="850px">
+    <el-dialog
+      title="pos收款"
+      top="5vh"
+      :visible.sync="recpaydialog"
+      modal
+      width="850px"
+    >
       <el-row type="flex">
         <el-form
           :model="receiveform"
@@ -402,7 +409,13 @@
     </el-dialog>
 
     <!-- 读卡 -->
-    <el-dialog title="读卡" :visible.sync="readCard" top="5vh" modal width="950px">
+    <el-dialog
+      title="读卡"
+      :visible.sync="readCard"
+      top="12vw"
+      modal
+      width="950px"
+    >
       <el-tabs type="card">
         <el-tab-pane label="读卡">
           <el-form
@@ -423,7 +436,7 @@
               </el-select>
             </el-form-item>
 
-            <el-form-item label=" ">
+            <el-form-item label="读取类型">
               <el-radio-group v-model="readcardform.radio" size="mini">
                 <el-radio-button :label="1">医保卡</el-radio-button>
                 <el-radio-button :label="2">身份证</el-radio-button>
@@ -484,8 +497,8 @@
             <el-button type="primary" size="small" @click="getReadCard"
               >读卡</el-button
             >
-            <el-button type="primary" size="small" @click="reMc"
-              >电子凭证</el-button
+            <el-button type="primary" size="small" @click="changePassword"
+              >密码修改</el-button
             >
             <el-button type="primary" size="small" @click="submitMedicareInfo"
               >确定</el-button
@@ -679,110 +692,99 @@
       width="950px"
     >
       <!-- <el-tabs type="card"> -->
-        <!-- <el-tab-pane label="整单退货"> -->
-          <el-form
-            :model="returnform"
-            inline
-            label-width="120px"
-            style="width: 1000px"
+      <!-- <el-tab-pane label="整单退货"> -->
+      <el-form
+        :model="returnform"
+        inline
+        label-width="120px"
+        style="width: 1000px"
+      >
+        <el-form-item label="流水号">
+          <el-input
+            type="text"
+            style="width: 220px"
+            v-model="returnform.billno"
+          ></el-input>
+        </el-form-item>
+        <el-form-item label="起始日期">
+          <el-date-picker
+            type="date"
+            placeholder="开始日期"
+            @change="dealTime(0)"
+            v-model="returnform.beginDate"
+            style="width: 220px"
+          ></el-date-picker>
+        </el-form-item>
+        <!-- 流水号查询 -->
+        <el-form-item>
+          <el-button type="primary" size="small" @click="searchByOverflow"
+            >查询</el-button
           >
-            <el-form-item label="流水号">
-              <el-input
-                type="text"
-                style="width: 220px"
-                v-model="returnform.billno"
-              ></el-input>
-            </el-form-item>
-            <el-form-item label="起始日期">
-              <el-date-picker
-                type="date"
-                placeholder="开始日期"
-                @change="dealTime(0)"
-                v-model="returnform.beginDate"
-                style="width: 220px"
-              ></el-date-picker>
-            </el-form-item>
-            <!-- 流水号查询 -->
-            <el-form-item>
-              <el-button type="primary" size="small" @click="searchByOverflow"
-                >查询</el-button
-              >
-              <el-button
-                type="primary"
-                size="small"
-                @click="returndialog = false"
-                >确定</el-button
-              >
-            </el-form-item>
-
-            <el-form-item label="会员编号">
-              <el-input
-                type="text"
-                style="width: 220px"
-                v-model="returnform.id"
-              ></el-input>
-            </el-form-item>
-            <el-form-item label="结束日期">
-              <el-date-picker
-                type="date"
-                placeholder="结束日期"
-                @change="dealTime(1)"
-                style="width: 220px"
-                v-model="returnform.endDate"
-              ></el-date-picker>
-            </el-form-item>
-          </el-form>
-
-          <el-table
-            style="margin-top: 10px"
-            :header-cell-style="{ 'text-align': 'center' }"
-            :cell-style="{ 'text-align': 'center' }"
-            v-loading="loading"
-            :data="chargebackList"
-            height="230px"
-            @row-click="chooseChargeback"
-            border
+          <el-button type="primary" size="small" @click="returndialog = false"
+            >确定</el-button
           >
-            <el-table-column prop="BillNo" label="单据编号"></el-table-column>
-            <el-table-column prop="billdate" label="单据日期"></el-table-column>
-            <el-table-column prop="billtime" label="单据时间">
-            </el-table-column>
-            <el-table-column prop="id" label="会员编号"> </el-table-column>
-            <el-table-column prop="membername" label="会员"> </el-table-column>
-            <el-table-column prop="amounttax" label="价税合计">
-            </el-table-column>
-          </el-table>
+        </el-form-item>
 
-          <el-table
-            style="margin: 10px 0"
-            :header-cell-style="{ 'text-align': 'center' }"
-            :cell-style="{ 'text-align': 'center' }"
-            v-loading="loading"
-            :data="oneChargeback"
-            height="230px"
-            border
-          >
-            <el-table-column prop="Psnname" label="医保姓名"></el-table-column>
-            <el-table-column
-              prop="Medfeesumamt"
-              label="刷卡金额"
-            ></el-table-column>
-            <el-table-column prop="materielguid" label="货号">
-            </el-table-column>
-            <el-table-column prop="singlequantity" label="数量">
-            </el-table-column>
-            <el-table-column prop="singlequantity" label="退货数量">
-            </el-table-column>
-            <el-table-column prop="xy_ybgbm" label="药品国标码">
-            </el-table-column>
-            <el-table-column prop="PM" label="品名"> </el-table-column>
-            <el-table-column prop="GG" label="规格"> </el-table-column>
-            <el-table-column prop="SCDW" label="生产企业"> </el-table-column>
-            <el-table-column prop="PDW" label="单位"> </el-table-column>
-            <el-table-column prop="batchno" label="批号"> </el-table-column>
-          </el-table>
-        <!-- </el-tab-pane> -->
-        <!-- <el-tab-pane label="拆单退货">拆单退货</el-tab-pane> -->
+        <el-form-item label="会员编号">
+          <el-input
+            type="text"
+            style="width: 220px"
+            v-model="returnform.id"
+          ></el-input>
+        </el-form-item>
+        <el-form-item label="结束日期">
+          <el-date-picker
+            type="date"
+            placeholder="结束日期"
+            @change="dealTime(1)"
+            style="width: 220px"
+            v-model="returnform.endDate"
+          ></el-date-picker>
+        </el-form-item>
+      </el-form>
+
+      <el-table
+        style="margin-top: 10px"
+        :header-cell-style="{ 'text-align': 'center' }"
+        :cell-style="{ 'text-align': 'center' }"
+        v-loading="loading"
+        :data="chargebackList"
+        height="230px"
+        @row-click="chooseChargeback"
+        border
+      >
+        <el-table-column prop="BillNo" label="单据编号"></el-table-column>
+        <el-table-column prop="billdate" label="单据日期"></el-table-column>
+        <el-table-column prop="billtime" label="单据时间"> </el-table-column>
+        <el-table-column prop="id" label="会员编号"> </el-table-column>
+        <el-table-column prop="membername" label="会员"> </el-table-column>
+        <el-table-column prop="amounttax" label="价税合计"> </el-table-column>
+      </el-table>
+
+      <el-table
+        style="margin: 10px 0"
+        :header-cell-style="{ 'text-align': 'center' }"
+        :cell-style="{ 'text-align': 'center' }"
+        v-loading="loading"
+        :data="oneChargeback"
+        height="230px"
+        border
+      >
+        <el-table-column prop="Psnname" label="医保姓名"></el-table-column>
+        <el-table-column prop="Medfeesumamt" label="刷卡金额"></el-table-column>
+        <el-table-column prop="materielguid" label="货号"> </el-table-column>
+        <el-table-column prop="singlequantity" label="数量"> </el-table-column>
+        <el-table-column prop="singlequantity" label="退货数量">
+        </el-table-column>
+        <el-table-column prop="xy_ybgbm" label="药品国标码"> </el-table-column>
+        <el-table-column prop="PM" label="品名"> </el-table-column>
+        <el-table-column prop="GG" label="规格"> </el-table-column>
+        <el-table-column prop="SCDW" label="生产企业"> </el-table-column>
+        <el-table-column prop="PDW" label="单位"> </el-table-column>
+        <el-table-column prop="batchno" label="批号"> </el-table-column>
+      </el-table>
+      <!-- </el-tab-pane> -->
+      <!-- <el-tab-pane label="拆单退货">拆单退货</el-tab-pane> -->
       <!-- </el-tabs> -->
     </el-dialog>
 
@@ -878,6 +880,9 @@
         ></el-row
       >
     </el-dialog>
+
+    <!-- 修改密码 -->
+    <!-- <change-password /> -->
   </el-card>
 </template>
 
@@ -898,11 +903,13 @@ import {
   formalSettlement,
   cancelSetl,
   queryInfoByIdentity,
-  queryByIpt
+  queryByIpt,
+  changePassword
 } from '../../api/api.js'
 // import { mapState } from 'vuex'
 import topInfo from './components/topInfo'
-
+// import changePassword from './components/change_password'
+// import eventBus from '@/utils/eventBus'
 import { floatMultiply } from '../../utils/plugins'
 
 export default {
@@ -917,6 +924,17 @@ export default {
     }
 
     return {
+      conditionform: {
+        lvs: '', // 旅居史
+        ywfr: '', // 发热
+        vipname: '', // 会员
+        vipnamevalue: '', // 会员积分
+        vipchooseInfo: '', // 会员信息
+        workername: '', // 营业员
+        workernamevalue: '', // 营业员
+        goodname: '', // 商品名
+        notes: '' // 备注
+      },
       idCardIpt: {
         name: '',
         idNo: ''
@@ -935,17 +953,6 @@ export default {
       OrganizationAndPharmacist: {}, // 组织机构、药师、班次号
       isReturnGood: 5, // 单据状态 ---》 5 售货状态   7退货状态
       serialnumber: '', // 流水号
-
-      conditionform: {
-        lvs: '', // 旅居史
-        ywfr: '', // 发热
-        vipname: '', // 会员
-        vipnamevalue: '', // 会员积分
-        vipchooseInfo: '', // 会员信息
-        workername: '', // 营业员
-        workernamevalue: '', // 营业员
-        goodname: '' // 商品名
-      },
 
       quantity: '', // 数量
       retailprice: 0, // 零售价
@@ -1019,15 +1026,28 @@ export default {
     }
   },
   methods: {
-
+    notesChange () {
+      if (this.readcardform.diseCode === '') {
+        this.$message({
+          type: 'warning',
+          message: '个账不允许输入备注'
+        })
+        this.conditionform.notes = ''
+      }
+    },
     // 新增一个商品！！！！！！！！！！！！！！！！！！！
     async submitOne () {
+      const { 有效期, 成本价, 生产日期, 药品国标码, 批号, 批次号, 货号 } =
+        this.selectedRow
+
+      const { membername, workername, notes } = this.conditionform
       // 向selectRow 补充
       var onePiece = {
-        billtype: this.isReturnGood,
-        personname: this.conditionform.vipname, // 会员名
-        employeeid: this.conditionform.workername, // 营业员
-        code1: localStorage.getItem('operatoId'), // 登录人员号
+        billtype: this.isReturnGood, // 单据状态
+        personname: membername, // 会员名
+        employeeid: workername, // 营业员
+        notes,
+        code1: localStorage.getItem('operatoId'), // 操作人员
         discountprice: this.retailprice, // 折前零售价
         discountrate: this.discount, // 折扣
         unitpricetax: this.priceafterdiscount, // 折后价
@@ -1042,11 +1062,11 @@ export default {
         chalkdate: this.$relTime(Date.now()),
         auxquantity: this.quantity, // 数量
         singlequantity: this.quantity,
-        validdate: this.selectedRow.有效期, // 有效期
-        costprice: this.selectedRow.成本价, // 成本价
-        batchprice: this.selectedRow.成本价, // 批次成本价
-        batchdate: this.selectedRow.生产日期, // 生产日期
-        medListCode: this.selectedRow.药品国标码,
+        validdate: 有效期, // 有效期
+        costprice: 成本价, // 成本价
+        batchprice: 成本价, // 批次成本价
+        batchdate: 生产日期, // 生产日期
+        medListCode: 药品国标码,
         数量: this.quantity,
         折后价: this.priceafterdiscount,
         金额: floatMultiply(
@@ -1057,9 +1077,9 @@ export default {
           Number(this.quantity),
           Number(this.priceafterdiscount)
         ),
-        batchno: this.selectedRow.批号, // 批号
-        batchnumber: this.selectedRow.批次号, // 批次号
-        materielid: this.selectedRow.货号 // 货号
+        batchno: 批号, // 批号
+        batchnumber: 批次号, // 批次号
+        materielid: 货号 // 货号
       }
       this.selectedRow = { ...this.selectedRow, ...onePiece }
       const repeat = this.data.find((item) => {
@@ -1072,7 +1092,7 @@ export default {
       if (repeat) {
         if (
           repeat.auxquantity * 1 + this.quantity * 1 >
-          this.selectedRow.库存数量
+          this.selectedRow.库存数量 && this.conditionform.notes !== '11'
         ) {
           alert('所选药品总数量大于库存数量')
           return
@@ -1122,11 +1142,6 @@ export default {
       }
     },
 
-    // 刷新
-    refresh () {
-      this.reload()
-    },
-
     // 修改折扣
     discountInput () {
       if (this.discount < 0) this.discount = 0
@@ -1147,12 +1162,12 @@ export default {
 
     // 查询会员
     async vipdown () {
-      if (this.conditionform.vipname) {
+      if (this.conditionform.membername) {
         this.vip_search = true
 
         this.viploading = true
         const res = await searchVip({
-          param: this.conditionform.vipname
+          param: this.conditionform.membername
         })
         this.viploading = false
         if (res.code === 0 && res.msg === 'success') {
@@ -1180,7 +1195,7 @@ export default {
     // 会员列表点击事件
     chooseVip (val) {
       this.vipInfo = val
-      if (val.会员名称) this.conditionform.vipname = val.会员名称
+      if (val.会员名称) this.conditionform.membername = val.会员名称
       if (val.身份证号) this.conditionform.idcardno = val.身份证号
       const values = Object.values(val)
       const newArr = [val['会员名称'], val['手机号'], val['积分剩余']]
@@ -1267,7 +1282,7 @@ export default {
 
     // 数量回车
     quantitydown () {
-      if (this.quantity > this.selectedRow.库存数量) {
+      if (this.quantity > this.selectedRow.库存数量 && this.conditionform.notes !== '11') {
         this.$message({
           type: 'error',
           message: '药品售卖数量不能大于库存数量'
@@ -1282,7 +1297,7 @@ export default {
 
     // 折后价回车事件
     priceafterdiscountdown () {
-      if (this.quantity > this.selectedRow.库存数量) {
+      if (this.quantity > this.selectedRow.库存数量 && this.conditionform.notes !== '11') {
         this.$message({
           type: 'error',
           message: '药品售卖数量不能大于库存数量'
@@ -1293,9 +1308,9 @@ export default {
       }
     },
 
-    // 备注回车        》》》》》》》》》》》》》》》》》》》》》》
+    // 备注回车          >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     remarkdown () {
-      if (this.quantity > this.selectedRow.库存数量) {
+      if (this.quantity > this.selectedRow.库存数量 && this.conditionform.notes !== '11') {
         this.$message({
           type: 'error',
           message: '药品售卖数量不能大于库存数量'
@@ -1332,7 +1347,7 @@ export default {
       }
     },
 
-    // pagedown pos收款  ))))))))))))))))))))))))))))))))))))))
+    // pagedown pos收款  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     async GenerateOutgoingList () {
       try {
         const res = await GenerateOutgoingList(this.data)
@@ -1377,28 +1392,33 @@ export default {
       }
     },
 
-    // 读医保卡和身份证>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    // 读医保卡和身份证   &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
     async getReadCard () {
+      if (!this.readcardform.medicalTreatmentType) {
+        alert('请选择医疗类别后再进行读卡')
+        return false
+      }
+      const loading = this.$loading({
+        lock: true,
+        text: 'Loading', // 加载时文字
+        spinner: 'el-icon-loading', // 加载样式
+        background: 'rgba(0, 0, 0, 0.7)' // 透明度
+      })
+
+      const { 定点药店编号, 药店名称, 药师编号, 职员名称 } =
+        this.OrganizationAndPharmacist
+      const { medicalTreatmentType } = this.readcardform
+
       if (this.readcardform.radio === 1) {
-        if (!this.readcardform.medicalTreatmentType) {
-          alert('请选择医疗类别后再进行读卡')
-          return false
-        }
-        const loading = this.$loading({
-          lock: true,
-          text: 'Loading', // 加载时文字
-          spinner: 'el-icon-loading', // 加载样式
-          background: 'rgba(0, 0, 0, 0.7)' // 透明度
-          // 255,255,255,.9  白色背景
-        })
+        // 读医保卡
         try {
           const res = await getReadCard({
-            hospitalNo: this.OrganizationAndPharmacist.定点药店编号, // 定点药店编码
-            shopName: this.OrganizationAndPharmacist.药店名称, // 药店名称
-            opter: this.OrganizationAndPharmacist.药师编号, // 药师编码
-            opterName: this.OrganizationAndPharmacist.职员名称, // 药师名称
+            hospitalNo: 定点药店编号, // 定点药店编码
+            shopName: 药店名称, // 药店名称
+            opter: 药师编号, // 药师编码
+            opterName: 职员名称, // 药师名称
             orgNo: '210800', // 定点机构编码
-            medicalTreatmentType: this.readcardform.medicalTreatmentType
+            medicalTreatmentType: medicalTreatmentType
           })
           loading.close()
           if (res.code === 0 && res.msg === 'success') {
@@ -1407,7 +1427,12 @@ export default {
               type: 'success'
             })
             this.CardDetail = res.baseInfo
-            this.diseCodeArr = res.baseInfo.diseCode && res.baseInfo.diseCode.split(';')
+            this.diseCodeArr = res.baseInfo.diseCode
+              ? res.baseInfo.diseCode.split(';')
+              : []
+            if (this.diseCodeArr.length > 0) {
+              this.readcardform.diseCode = this.diseCodeArr[0]
+            }
           } else {
             this.$message({
               message: res.msg,
@@ -1423,17 +1448,12 @@ export default {
         }
       } else if (this.readcardform.radio === 2) {
         // 读身份证
-        const loading = this.$loading({
-          lock: true,
-          text: 'Loading', // 加载时文字
-          spinner: 'el-icon-loading', // 加载样式
-          background: 'rgba(0, 0, 0, 0.7)' // 透明度
-        })
         try {
           const res = await queryByIpt({
-            hospitalNo: this.OrganizationAndPharmacist.定点药店编号, // 定点药店编码
-            shopName: this.OrganizationAndPharmacist.药店名称, // 药店名称
-            orgNo: '210800' // 定点机构编码
+            hospitalNo: 定点药店编号, // 定点药店编码
+            shopName: 药店名称, // 药店名称
+            orgNo: '210800', // 定点机构编码
+            medicalTreatmentType: medicalTreatmentType
           })
           loading.close()
           if (res.code === 0 && res.msg === 'success') {
@@ -1457,7 +1477,74 @@ export default {
           })
         }
         this.isShowIdIpt = true
+      } else if (this.readcardform.radio === 3) {
+        // 获取电子凭证
+        try {
+          const data = {
+            hospitalNo: 定点药店编号, // 定点药店编码
+            shopName: 药店名称, // 药店名称
+            opter: 药师编号, // 药师编码
+            opterName: 职员名称, // 药师名称
+            orgNo: '210800', // 定点机构编码
+            medicalTreatmentType: medicalTreatmentType
+          }
+          const res = await reMc(data)
+          if (res.code === 0 && res.msg === 'success') {
+            this.$message({
+              message: '获取电子凭证成功',
+              type: 'success'
+            })
+            this.CardDetail = res.baseInfo
+            this.diseCodeArr = res.baseInfo.diseCode
+              ? res.baseInfo.diseCode.split(';')
+              : []
+            if (this.diseCodeArr.length > 0) {
+              this.readcardform.diseCode = this.diseCodeArr[0]
+            }
+          } else {
+            this.$message({
+              message: '获取电子凭证失败',
+              type: 'error'
+            })
+          }
+
+          loading.close()
+        } catch (error) {
+          loading.close()
+          this.$message({
+            message: '获取电子凭证失败',
+            type: 'error'
+          })
+        }
       }
+    },
+
+    // 密码修改
+    async changePassword () {
+      const loading = this.$loading({
+        lock: true,
+        text: 'Loading', // 加载时文字
+        spinner: 'el-icon-loading', // 加载样式
+        background: 'rgba(0, 0, 0, 0.7)' // 透明度
+      })
+      try {
+        const { 定点药店编号 } = this.OrganizationAndPharmacist
+        const res = await changePassword({
+          hospitalNo: 定点药店编号
+        })
+        loading.close()
+        if (res.code === 0 && res.msg === 'success') {
+          alert('修改成功')
+        }
+      } catch (error) {
+        loading.close()
+        this.$message({
+          type: 'error',
+          message: '修改失败,请重试'
+        })
+      }
+
+      // eventBus.$emit('changePassword')
     },
 
     // 根据身份证查询基本信息
@@ -1469,13 +1556,16 @@ export default {
         spinner: 'el-icon-loading', // 加载样式
         background: 'rgba(0, 0, 0, 0.7)' // 透明度
       })
+      const { 定点药店编号, 药店名称 } = this.OrganizationAndPharmacist
+      const { medicalTreatmentType } = this.readcardform
       try {
         const res = await queryInfoByIdentity({
-          hospitalNo: this.OrganizationAndPharmacist.定点药店编号,
-          shopName: this.OrganizationAndPharmacist.药店名称,
+          hospitalNo: 定点药店编号,
+          shopName: 药店名称,
           orgNo: '210800',
           name: this.idCardIpt.name,
-          idNo: this.idCardIpt.idNo
+          idNo: this.idCardIpt.idNo,
+          medicalTreatmentType: medicalTreatmentType
         })
         loading.close()
         if (res.code === 0 && res.msg === 'success') {
@@ -1484,7 +1574,12 @@ export default {
             type: 'success'
           })
           this.CardDetail = res.baseInfo
-          this.diseCodeArr = res.baseInfo.diseCode && res.baseInfo.diseCode.split(';')
+          this.diseCodeArr = res.baseInfo.diseCode
+            ? res.baseInfo.diseCode.split(';')
+            : []
+          if (this.diseCodeArr.length > 0) {
+            this.readcardform.diseCode = this.diseCodeArr[0]
+          }
         } else {
           this.$message({
             message: '获取个人信息失败,请稍后再试!',
@@ -1496,44 +1591,6 @@ export default {
         loading.close()
         this.$message({
           message: '获取个人信息失败,请稍后再试!',
-          type: 'error'
-        })
-      }
-    },
-
-    // 获取电子医保凭证
-    async reMc () {
-      const loading = this.$loading({
-        lock: true,
-        text: 'Loading', // 加载时文字
-        spinner: 'el-icon-loading', // 加载样式
-        background: 'rgba(0, 0, 0, 0.7)' // 透明度
-      })
-      try {
-        const data = {
-          hospitalNo: this.OrganizationAndPharmacist.定点药店编号, // 定点药店编码
-          shopName: this.OrganizationAndPharmacist.药店名称, // 药店名称
-          opter: this.OrganizationAndPharmacist.药师编号, // 药师编码
-          opterName: this.OrganizationAndPharmacist.职员名称, // 药师名称
-          orgNo: '210800' // 定点机构编码
-        }
-
-        const res = await reMc(data)
-        if (res.code === 0 && res.msg === 'success') {
-          this.CardDetail = res.baseInfo
-          this.diseCodeArr = res.baseInfo.diseCode && res.baseInfo.diseCode.split(';')
-        } else {
-          this.$message({
-            message: '获取电子凭证失败',
-            type: 'error'
-          })
-        }
-
-        loading.close()
-      } catch (error) {
-        loading.close()
-        this.$message({
-          message: '获取电子凭证失败',
           type: 'error'
         })
       }
@@ -1571,23 +1628,27 @@ export default {
           unitPrice: item.discountprice // 单价
         }
       })
-
+      const { 定点药店编号, 药店名称, 药师编号, 职员名称 } =
+        this.OrganizationAndPharmacist
+      const { insuOrgNo, psnNo, certNo, psnName } = this.CardDetail
+      const { diseCode, isMedicarePayment, medicalTreatmentType, insuType } =
+        this.readcardform
       try {
         const res = await preSettlement({
-          hospitalNo: this.OrganizationAndPharmacist.定点药店编号, // 定点药店编码
-          shopName: this.OrganizationAndPharmacist.药店名称, // 药店名称
-          opter: this.OrganizationAndPharmacist.药师编号, // 药师编码
-          opterName: this.OrganizationAndPharmacist.职员名称, // 药师名称
-          diseaseCode: this.readcardform.diseCode, // 慢特病
-          orgNo: this.CardDetail.insuOrgNo, // 定点机构编码
-          psnNo: this.CardDetail.psnNo, // 个人编号
-          psnName: this.CardDetail.psnName, // 个人姓名
-          idNo: this.CardDetail.certNo, // 身份证号
+          hospitalNo: 定点药店编号, // 定点药店编码
+          shopName: 药店名称, // 药店名称
+          opter: 药师编号, // 药师编码
+          opterName: 职员名称, // 药师名称
+          diseaseCode: diseCode, // 慢特病
+          orgNo: insuOrgNo, // 定点机构编码
+          psnNo: psnNo, // 个人编号
+          psnName: psnName, // 个人姓名
+          idNo: certNo, // 身份证号
           begnTime: this.$relTime(Date.now()), // 购药时间
           totalAmount: this.subtotal, // 医疗费总额
-          acctUserFlag: this.readcardform.isMedicarePayment ? 1 : 0, // 医保支付标志
-          medicalTreatmentType: this.readcardform.medicalTreatmentType, // 医疗类别
-          insuType: this.readcardform.insuType, // 险种类别
+          acctUserFlag: isMedicarePayment ? 1 : 0, // 医保支付标志
+          medicalTreatmentType: medicalTreatmentType, // 医疗类别
+          insuType: insuType, // 险种类别
           billNo: this.serialnumber,
           items: items
         })
@@ -1612,7 +1673,7 @@ export default {
 
     // 正式结算
     async formalSettlement () {
-      this.alreadyPay = true // 点击一次禁用结算按钮
+      this.alreadyPay = true // 点击一次禁用确定按钮
       const items = this.data.map((item) => {
         return {
           medicalItemCode: item.medListCode, // 医药机构目录编码
@@ -1629,48 +1690,61 @@ export default {
         background: 'rgba(0, 0, 0, 0.7)' // 透明度
         // 255,255,255,.9  白色背景
       })
-      try {
-        const res = await formalSettlement({
-          hospitalNo: this.OrganizationAndPharmacist.定点药店编号, // 定点药店编码
-          shopName: this.OrganizationAndPharmacist.药店名称, // 药店名称
-          opter: this.OrganizationAndPharmacist.药师编号, // 药师编码
-          opterName: this.OrganizationAndPharmacist.职员名称, // 药师名称
-          diseaseCode: this.readcardform.diseCode, // 慢特病
-          orgNo: this.CardDetail.insuOrgNo, // 定点机构编码
-          psnNo: this.CardDetail.psnNo, // 个人编号
-          idNo: this.CardDetail.certNo, // 身份证号
-          begnTime: this.$relTime(Date.now()), // 购药时间
-          totalAmount: this.subtotal, // 医疗费总额
-          acctUserFlag: this.readcardform.isMedicarePayment ? 1 : 0, // 医保支付标志
-          medicalTreatmentType: this.readcardform.medicalTreatmentType, // 医疗类别
-          orderId: this.nowGuid,
-          billNo: this.serialnumber,
-          insuType: this.readcardform.insuType, // 险种类别
-          items: items,
-          balance: this.CardDetail.balc // 医保刷卡余额
-        })
+      const stopIndex = this.data.findIndex(
+        (item) => item.materielid === '91000'
+      )
+      if (stopIndex !== -1) {
+        alert('当前已选商品中存在测试货号,不允许正式结算!!!')
         loading.close()
-        if (res.code === 0 && res.msg === 'success') {
-          // hifpPay 统筹基金支出
-          // acctPay 个人账户支出
-          // 正式支付结果
-          this.PaymentSetInfo = res.setlInfo
-          this.settlementSuccess = true
-          this.pre_settlement = false
-          this.recpaydialog = false
-          // this.receiveform.大石桥医保 = res.setlInfo.balance
-        } else {
+      } else {
+        const { 定点药店编号, 药店名称, 药师编号, 职员名称 } =
+          this.OrganizationAndPharmacist
+        const { insuOrgNo, psnNo, certNo, balc } = this.CardDetail
+        const { diseCode, isMedicarePayment, medicalTreatmentType, insuType } =
+          this.readcardform
+        try {
+          const res = await formalSettlement({
+            hospitalNo: 定点药店编号, // 定点药店编码
+            shopName: 药店名称, // 药店名称
+            opter: 药师编号, // 药师编码
+            opterName: 职员名称, // 药师名称
+            orgNo: insuOrgNo, // 定点机构编码
+            psnNo, // 个人编号
+            idNo: certNo, // 身份证号
+            balance: balc, // 医保刷卡余额
+            begnTime: this.$relTime(Date.now()), // 购药时间
+            totalAmount: this.subtotal, // 医疗费总额
+            diseaseCode: diseCode, // 慢特病
+            acctUserFlag: isMedicarePayment ? 1 : 0, // 医保支付标志
+            medicalTreatmentType, // 医疗类别
+            insuType, // 险种类别
+            orderId: this.nowGuid,
+            billNo: this.serialnumber,
+            items: items
+          })
+          loading.close()
+          if (res.code === 0 && res.msg === 'success') {
+            // hifpPay 统筹基金支出
+            // acctPay 个人账户支出
+            // 正式支付结果
+            this.PaymentSetInfo = res.setlInfo
+            this.settlementSuccess = true
+            this.pre_settlement = false
+            this.recpaydialog = false
+            // this.receiveform.大石桥医保 = res.setlInfo.balance
+          } else {
+            this.$message({
+              type: 'error',
+              message: res.msg
+            })
+          }
+        } catch (error) {
+          loading.close()
           this.$message({
             type: 'error',
-            message: res.msg
+            message: '结算失败,请重试!'
           })
         }
-      } catch (error) {
-        loading.close()
-        this.$message({
-          type: 'error',
-          message: '结算失败,请重试!'
-        })
       }
     },
 
@@ -1682,11 +1756,13 @@ export default {
 
     // 撤销结算
     async cancelSetl () {
+      const { 定点药店编号, 药店名称, 药师编号, 职员名称 } =
+        this.OrganizationAndPharmacist
       const res = await cancelSetl({
-        hospitalNo: this.OrganizationAndPharmacist.定点药店编号, // 定点药店编码
-        shopName: this.OrganizationAndPharmacist.药店名称, // 药店名称
-        opter: this.OrganizationAndPharmacist.药师编号, // 药师编码
-        opterName: this.OrganizationAndPharmacist.职员名称, // 药师名称
+        hospitalNo: 定点药店编号, // 定点药店编码
+        shopName: 药店名称, // 药店名称
+        opter: 药师编号, // 药师编码
+        opterName: 职员名称, // 药师名称
         orgNo: this.CardDetail.insuOrgNo, // 定点机构编码
         orderId: this.nowGuid, // 订单号
         billNo: this.serialnumber // 流水号
@@ -1714,31 +1790,50 @@ export default {
 
     // 订单查询 退单 选择事件
     async chooseChargeback (val) {
-      this.nowGuid = val.Guid // guid
-      this.orgNo = val.orgNo // 定点机构编号
-      this.conditionform.vipname = val.membername // 会员名
-      this.conditionform.tele = val.tele // 手机号
-      this.conditionform.idcardno = val.idcardno // 身份证号
-      this.conditionform.address = val.address // 地址
-      this.conditionform.lvs = val.lvs // 旅居史
-      this.conditionform.ywfr = val.ywfr // 发热
-      this.isReturnGood = Number(val.BillType) // 单据状态
-      this.serialnumber = val.BillNo + '_TH' // 流水号
-      if (val.BillNo === '') {
+      const {
+        Guid,
+        orgNo,
+        membername,
+        tele,
+        idcardno,
+        address,
+        lvs,
+        ywfr,
+        BillType,
+        BillNo,
+        appguid,
+        appdetailguid,
+        id,
+        Warehouseguid,
+        notes
+      } = val
+      this.nowGuid = Guid // guid
+      this.orgNo = orgNo // 定点机构编号
+      this.conditionform.membername = membername // 会员名
+      this.conditionform.tele = tele // 手机号
+      this.conditionform.idcardno = idcardno // 身份证号
+      this.conditionform.address = address // 地址
+      this.conditionform.lvs = lvs // 旅居史
+      this.conditionform.ywfr = ywfr // 发热
+      this.conditionform.notes = notes
+      this.isReturnGood = Number(BillType) // 单据状态
+      this.serialnumber = BillNo + '_TH' // 流水号
+      if (BillNo === '') {
         alert('当前订单流水号为空，请重新选择')
         return
       }
-      this.conditionform.workername = val.code
 
       try {
         // 点击单 查询退单子明细
         const res = await returnBackGuid({
           guid: this.nowGuid
         })
+        if (res.code === 0 && res.msg === 'success') {
+          this.oneChargeback = res.data
+        }
 
-        this.oneChargeback = res.data
         this.subtotal = 0
-        this.data = res.data.map((item, index) => {
+        this.data = this.oneChargeback.map((item, index) => {
           this.subtotal = (
             Number(this.subtotal) + Number('-' + item.amounttax)
           ).toFixed(2)
@@ -1756,26 +1851,23 @@ export default {
             规格: item.GG,
             生产单位: item.SCDW,
             单位: item.PDW,
-            billtype: val.BillType, // 单据状态
-            personname: val.membername, // 会员名
-            appguid: val.appguid,
-            appdetailguid: val.appdetailguid,
-            employeeid: val.code, // 营业员 //要先输入营业员在退单
-            code1: localStorage.getItem('operatoId'), // 登录人员号
+            billtype: BillType, // 单据状态
+            personname: membername, // 会员名
+            appguid: appguid,
+            appdetailguid: appdetailguid,
+            employeeid: item.employeeguid, // 营业员 //要先输入营业员在退单
+            code1: localStorage.getItem('operatoId'), // 操作人员
             discountprice: item.discountprice, // 折前零售价
             discountrate: item.discountrate, // 折扣
             unitpricetax: item.unitpricetax, // 折后价
-            billno: val.BillNo + '_TH', // 流水号
-            originalno: val.BillNo,
-            id: val.id, // 会员编号
+            billno: BillNo + '_TH', // 流水号
+            originalno: BillNo,
+            id: id, // 会员编号
             code: this.OrganizationAndPharmacist.定点药店编号, // 定点药店编号
             detailno: index + 1, // 序号
-            stockid: val.Warehouseguid, // 仓库号
-            // billdate: val.billdate, // 日期
+            stockid: Warehouseguid, // 仓库号
             billdate: this.$dealTime(Date.now()) + ' ' + '00:00:00',
-            // billtime: val.billtime, // 时间
             billtime: '1900-01-01' + ' ' + this.$minTime(Date.now()), // 时间
-            // chalkdate: val.chalkdate, // 日期时间
             chalkdate: this.$relTime(Date.now()),
             materielid: item.materielguid, // 货号
             amounttax: Number('-' + item.amounttax), // 子明细总金额
@@ -1823,7 +1915,10 @@ export default {
           return
         }
         this.shouldReceive = this.subtotal // 应收现金
-        this.GenerateOutgoingList() // 生成出库单
+        const stopIndex = this.data.findIndex(
+          (item) => item.materielid === '91000'
+        )
+        if (stopIndex === -1) this.GenerateOutgoingList() // 91000不插入雨人
         this.getPaymentWay() // 获取支付方式
         if (this.data.length > 0) this.recpaydialog = true
       } else if (key === 38 && this.vip_search === true) {
@@ -1842,7 +1937,8 @@ export default {
         this.vipInfo = this.vip_table[this.vip_index]
 
         if (this.vip_table[this.vip_index].会员名称) {
-          this.conditionform.vipname = this.vip_table[this.vip_index].会员名称
+          this.conditionform.membername =
+            this.vip_table[this.vip_index].会员名称
         }
         if (this.vip_table[this.vip_index].身份证号) {
           this.conditionform.idcardno = this.vip_table[this.vip_index].身份证号
@@ -1916,7 +2012,7 @@ export default {
   watch: {
     // 修改数量
     quantity: function (newVal, oldVal) {
-      if (this.quantity > this.selectedRow.库存数量) {
+      if (this.quantity > this.selectedRow.库存数量 && this.conditionform.notes !== '11') {
         this.$message({
           type: 'error',
           message: '药品售卖数量不能大于库存数量!'
@@ -1960,6 +2056,7 @@ export default {
   },
   components: {
     'top-info': topInfo
+    // 'change-password': changePassword
   }
 }
 </script>

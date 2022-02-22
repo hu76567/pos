@@ -64,6 +64,8 @@ export default {
   methods: {
     login () {
       this.$refs.loginForm.validate().then(async () => {
+        // localStorage.setItem('operatoId', 'asdf')
+        // this.$router.push('/home')
         const loading = this.$loading({
           lock: true,
           text: '登录中', // 加载时文字

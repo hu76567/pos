@@ -226,3 +226,16 @@ export function receivePayment (guid) {
     url: 'yb/receivePayment'
   })
 }
+
+/**
+ * 修改密码
+ * @param {*} data
+ * @returns
+ */
+export function changePassword (data) {
+  return http({
+    url: '/yb/changePIN',
+    method: 'post',
+    data
+  })
+}
